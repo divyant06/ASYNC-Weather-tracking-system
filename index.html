@@ -1,0 +1,375 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Async Weather Tracker</title>
+
+<style>
+* {  
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    color: #1e293b;
+    padding: 30px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.top-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+
+.search-section, .weather-section {
+    flex: 1;
+}
+
+.console-section {
+    background: #f8fafc;
+}
+
+h2 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #1e3a8a;
+    border-bottom: 1px solid #cbd5f5;
+    padding-bottom: 5px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #c7d2fe;
+    border-radius: 5px;
+    outline: none;
+}
+
+button {
+    padding: 10px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+.history-section {
+    margin-top: 20px;
+}
+
+.history-section h3 {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 10px;
+}
+
+#historyList {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#historyList li {
+    background: #dbeafe;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid #bfdbfe;
+}
+
+#historyList li:hover {
+    background: #bfdbfe;
+}
+
+.weather-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.weather-item {
+    background: #e0f2fe;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #bae6fd;
+}
+
+.weather-item span {
+    display: block;
+    font-size: 12px;
+    color: #475569;
+}
+
+.weather-item strong {
+    display: block;
+    font-size: 16px;
+    margin-top: 4px;
+    color: #1e293b;
+}
+
+.error {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+.placeholder-text {
+    color: #64748b;
+    font-style: italic;
+}
+
+.console-box {
+    background: #0f172a;
+    color: #22c55e;
+    padding: 15px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 14px;
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.console-box p {
+    margin-bottom: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🌤️ Async Weather Tracker</h1>
+
+<div class="top-row">
+
+<div class="card search-section">
+<h2>Search City</h2>
+
+<div class="input-group">
+<input type="text" id="cityInput" placeholder="Enter city name">
+<button id="searchBtn">Search</button>
+</div>
+
+<div class="history-section">
+<h3>Search History</h3>
+<ul id="historyList"></ul>
+</div>
+</div>
+
+<div class="card weather-section">
+<h2>Weather Info</h2>
+<div id="weatherDisplay">
+<p class="placeholder-text">Enter a city to see weather info.</p>
+</div>
+</div>
+
+</div>
+
+<div class="card console-section">
+<h2>Console - Event Loop</h2>
+<div class="console-box" id="consoleBox"></div>
+</div>
+
+</div>
+
+<script>
+
+const API_KEY = 'b364cc00e3e5ad4ba5dba0364a37d5bf'; 
+
+const searchBtn = document.getElementById('searchBtn');
+const cityInput = document.getElementById('cityInput');
+const weatherDisplay = document.getElementById('weatherDisplay');
+const historyList = document.getElementById('historyList');
+const consoleBox = document.getElementById('consoleBox');
+
+function logToConsole(message, isError = false) {
+    console.log(message);
+    const p = document.createElement('p');
+    p.textContent = `> ${message}`;
+    if (isError) {
+        p.style.color = '#ef4444';
+    }
+    consoleBox.appendChild(p);
+    consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', loadHistory);
+
+searchBtn.addEventListener('click', () => {
+    const city = cityInput.value.trim();
+    if (city) {
+        consoleBox.innerHTML = '';
+        executeWeatherSearch(city);
+    } else {
+        logToConsole('Please enter a city name', true);
+    }
+});
+
+function executeWeatherSearch(city) {
+
+    logToConsole('Sync Start');
+
+    Promise.resolve().then(() => logToConsole('Promise.then (Microtask)'));
+
+    setTimeout(() => logToConsole('setTimeout (Macrotask)'), 0);
+
+    logToConsole('[ASYNC] START fetching');
+
+    fetchWeatherData(city);
+
+    logToConsole('Sync End');
+}
+
+async function fetchWeatherData(city) {
+
+    try {
+
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+
+            if (response.status === 404) {
+                throw new Error('City not found');
+            } 
+            else {
+                throw new Error('Invalid API response or Network error');
+            }
+        }
+
+        const data = await response.json();
+
+        logToConsole('[ASYNC] Data received');
+
+        displayWeather(data);
+
+        saveToHistory(data.name);
+
+    } catch (error) {
+
+        logToConsole(`Error: ${error.message}`, true);
+
+        weatherDisplay.innerHTML = `<p class="error">❌ ${error.message}</p>`;
+    }
+}
+
+function displayWeather(data) {
+
+weatherDisplay.innerHTML = `
+
+<div class="weather-grid">
+
+<div class="weather-item">
+<span>City</span>
+<strong>${data.name}, ${data.sys.country}</strong>
+</div>
+
+<div class="weather-item">
+<span>Temp</span>
+<strong>${data.main.temp} °C</strong>
+</div>
+
+<div class="weather-item">
+<span>Weather</span>
+<strong>${data.weather[0].main}</strong>
+</div>
+
+<div class="weather-item">
+<span>Humidity</span>
+<strong>${data.main.humidity}%</strong>
+</div>
+
+<div class="weather-item">
+<span>Wind</span>
+<strong>${data.wind.speed} m/s</strong>
+</div>
+
+</div>
+`;
+}
+
+function saveToHistory(city) {
+
+let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+
+if (!history.includes(city)) {
+
+history.unshift(city);
+
+if (history.length > 6) {
+history.pop();
+}
+
+localStorage.setItem('weatherHistory', JSON.stringify(history));
+
+loadHistory();
+}
+}
+
+function loadHistory() {
+
+historyList.innerHTML = '';
+
+let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+
+history.forEach(city => {
+
+const li = document.createElement('li');
+
+li.textContent = city;
+
+li.addEventListener('click', () => {
+
+cityInput.value = city;
+
+consoleBox.innerHTML = '';
+
+executeWeatherSearch(city);
+
+});
+
+historyList.appendChild(li);
+
+});
+}
+
+</script>
+
+</body>
+</html>
