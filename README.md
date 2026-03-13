@@ -132,7 +132,7 @@ This project helps understand:
 
 ## 👨‍💻 Author
 
-**Chirag Chanchal**
+**Divyant Podder**
 
 Computer Science Engineering Student
 Interested in **Cybersecurity, Blockchain, and Web Development**
